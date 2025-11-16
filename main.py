@@ -1,30 +1,26 @@
 import asyncio
-from pathlib import Path
+import json
 import re
 import time
-import json
 from datetime import datetime
 from urllib.parse import urlparse
+
+import astrbot.core.message.components as Comp
 from astrbot import logger
 from astrbot.api.event import filter
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star, StarTools, register
 from astrbot.core import AstrBotConfig
-from astrbot.core.platform import AstrMessageEvent
 from astrbot.core.config.astrbot_config import AstrBotConfig  # noqa: F811
-from astrbot.core.star.filter.permission import PermissionType
-from .browser import BrowserManager
-import astrbot.core.message.components as Comp
-
-favorite_file =Path("data/plugins/astrbot_plugin_browser/resource/favorite.json")
-browser_cookies_file =Path("data/plugins_data/astrbot_plugin_browser/browser_cookies.json")
-
-@register(
-    "astrbot_plugin_browser",
-    "Zhalslar",
-    "浏览器交互插件",
-    "v1.1.3",
-    "https://github.com/Zhalslar/astrbot_plugin_browser",
+from astrbot.core.platform import AstrMessageEvent
+from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
+    AiocqhttpMessageEvent,
 )
+from astrbot.core.star.filter.permission import PermissionType
+
+from .browser import BrowserManager
+
+
+@register("astrbot_plugin_browser", "Zhalslar", "...", "...")
 class BrowserPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -53,8 +49,13 @@ class BrowserPlugin(Star):
         self.napcat_token: str = napcat_config.get("token", "napcat")
         self.napcat_dark_themes: bool = napcat_config.get("dark_themes", False)  # 是否使用深色主题
 
+        # 文件路径
+        self.plugin_data_dir = StarTools.get_data_dir("astrbot_plugin_qqadmin")
+        self.browser_cookies_file = self.plugin_data_dir / "browser_cookies.json"
+        self.favorite_file = self.plugin_data_dir / "favorite.json"
+
         # 初始化浏览器
-        self.browser = BrowserManager(browser_cookies_file)
+        self.browser = BrowserManager(self.browser_cookies_file)
         asyncio.create_task(self.browser.initialize())
 
         # 初始化 favorite
@@ -63,18 +64,16 @@ class BrowserPlugin(Star):
 
     def _load_favorite(self):
         """加载收藏文件，如果不存在则创建空文件"""
-        favorite_file.parent.mkdir(parents=True, exist_ok=True)
-
-        if favorite_file.exists():
+        if self.favorite_file.exists():
             try:
-                with open(favorite_file, "r", encoding="utf-8") as file:
+                with open(self.favorite_file, encoding="utf-8") as file:
                     self.favorite = json.load(file)
             except json.JSONDecodeError as e:
                 logger.error(f"JSON 文件格式错误: {e}")
             except Exception as e:
                 logger.error(f"读取 JSON 文件时发生错误: {e}")
         else:
-            with open(favorite_file, "w", encoding="utf-8") as file:
+            with open(self.favorite_file, "w", encoding="utf-8") as file:
                 json.dump({}, file, ensure_ascii=False, indent=2)
 
     @filter.command("浏览器帮助")
@@ -145,8 +144,6 @@ class BrowserPlugin(Star):
 
         bot_message = "正在搜索..."
         if event.get_platform_name() == "aiocqhttp":
-            # OneBot 11 API “send_msg”可以获取到消息 ID，从而撤回消息
-            from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
             assert isinstance(event, AiocqhttpMessageEvent)
             client = event.bot
             cilent_message_id = (await client.send_msg(group_id=int(group_id), message=bot_message)).get("message_id")
@@ -381,7 +378,7 @@ class BrowserPlugin(Star):
             yield event.plain_result(f" {name} 已收藏过了")
             return
         self.favorite[name] = url
-        with open(favorite_file, "w", encoding="utf-8") as file:
+        with open(self.favorite_file, "w", encoding="utf-8") as file:
             json.dump(self.favorite, file, ensure_ascii=False, indent=4)
         yield event.plain_result(f"已收藏：{name}: {url}")
 
@@ -396,7 +393,7 @@ class BrowserPlugin(Star):
             yield event.plain_result(f"{name} 在收藏夹中不存在")
             return
         del self.favorite[name]
-        with open(favorite_file, "w", encoding="utf-8") as file:
+        with open(self.favorite_file, "w", encoding="utf-8") as file:
             json.dump(self.favorite, file, ensure_ascii=False, indent=4)
         yield event.plain_result(f"已取消收藏：{name}")
 
@@ -408,7 +405,7 @@ class BrowserPlugin(Star):
             yield event.plain_result("收藏夹列表为空")
             return
         self.favorite.clear()
-        with open(favorite_file, "w", encoding="utf-8") as file:
+        with open(self.favorite_file, "w", encoding="utf-8") as file:
             json.dump(self.favorite, file, ensure_ascii=False, indent=4)
         yield event.plain_result("已清空收藏夹")
 

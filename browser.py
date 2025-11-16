@@ -1,21 +1,23 @@
 
-import json
 import asyncio
+import json
 from pathlib import Path
+
+from playwright.async_api import BrowserContext, Page, async_playwright
+
 from astrbot import logger
-from playwright.async_api import async_playwright, Page, BrowserContext
-from typing import Dict, Optional, List
+
 from .ticks_overlay import TickOverlayManager
 
 
 class BrowserManager:
-    def __init__(self, browser_cookies_file: Path | str):
+    def __init__(self, browser_cookies_file: Path):
         self.playwright = None
         self.browser = None
-        self.context: Optional[BrowserContext] = None
-        self.user_sessions: Dict[str, Page] = {}  # 每个group_id对应一个Page
-        self.all_pages: List[Page] = []
-        self.cookies_file_path = str(browser_cookies_file)  # cookies文件路径
+        self.context: BrowserContext | None = None
+        self.user_sessions: dict[str, Page] = {}  # 每个group_id对应一个Page
+        self.all_pages: list[Page] = []
+        self.cookies_file_path = browser_cookies_file  # cookies文件路径
         self.in_memory_cookies: list = []  # 内存中的cookies副本（保持列表格式）
         self.tom = TickOverlayManager()
 
@@ -82,17 +84,24 @@ class BrowserManager:
         else:
             raise Exception("浏览器上下文未初始化，请先初始化浏览器。")
 
-
     async def load_cookies(self):
-        """"从json文件中加载cookies到当前的浏览器上下文"""
+        """从json文件中加载cookies到当前的浏览器上下文"""
         try:
-            with open(self.cookies_file_path, "r") as f:
+            # 尝试打开并加载 cookies 文件
+            with open(self.cookies_file_path, encoding="utf-8") as f:
                 cookies = json.load(f)
                 self.in_memory_cookies = cookies
                 if self.context:
                     await self.context.add_cookies(cookies)
         except FileNotFoundError:
-            print("Cookies文件未找到，跳过加载。")
+            # 如果文件不存在，则创建一个空的 JSON 文件
+            print("Cookies文件未找到，正在创建空的cookies文件。")
+            self.cookies_file_path.parent.mkdir(
+                parents=True, exist_ok=True
+            )  # 确保父目录存在
+            with open(self.cookies_file_path, "w", encoding="utf-8") as f:
+                json.dump([], f)  # 创建一个空的 JSON 数组
+            self.in_memory_cookies = []  # 初始化 in_memory_cookies 为一个空列表
         except json.JSONDecodeError:
             print("Cookies文件格式错误，跳过加载。")
 
@@ -354,7 +363,7 @@ class BrowserManager:
         await page.wait_for_load_state("networkidle")
         return None
 
-    async def get_all_tabs_titles(self) -> List[str]:
+    async def get_all_tabs_titles(self) -> list[str]:
         """获取所有标签页的名称"""
         titles = []
         for page in self.all_pages:

@@ -27,19 +27,29 @@ class BrowserPlugin(Star):
         self.config = config
         self.viewport_width: int = config.get("viewport_width", 1920)  # 视口宽度
         self.viewport_height: int = config.get("viewport_height", 1440)  # 视口高度
-        self.zoom_factor: float = config.get("zoom_factor", 1.5)  # 打开新页面时的默认缩放比例
-        self.full_page_zoom_factor: float = config.get("full_page_zoom_factor", 0)  # 查看页时的默认缩放比例, 0表示不改变原来的缩放比
-        self.default_search_engine: str = config.get("default_search_engine", "必应搜索")  # 默认使用的搜索引擎
-        self.max_pages: int = config.get("max_pages", 6) # 允许的最大标签页数量
-        self.delete_file_cookies: bool = config.get("delete_file_cookies", False) # 是否删除文件中的cookies
-        self.banned_wprds: list[str] = config.get("banned_words", [])  # 禁止的关键词列表
+        self.zoom_factor: float = config.get(
+            "zoom_factor", 1.5
+        )  # 打开新页面时的默认缩放比例
+        self.full_page_zoom_factor: float = config.get(
+            "full_page_zoom_factor", 0
+        )  # 查看页时的默认缩放比例, 0表示不改变原来的缩放比
+        self.default_search_engine: str = config.get(
+            "default_search_engine", "必应搜索"
+        )  # 默认使用的搜索引擎
+        self.max_pages: int = config.get("max_pages", 6)  # 允许的最大标签页数量
+        self.delete_file_cookies: bool = config.get(
+            "delete_file_cookies", False
+        )  # 是否删除文件中的cookies
+        self.banned_wprds: list[str] = config.get(
+            "banned_words", []
+        )  # 禁止的关键词列表
 
         # 获取astrbot的配置
         astrbot_config = config.get("astrbot_config", {})
         self.password = astrbot_config.get("password", "astrbot")
         dashboard_config = AstrBotConfig()["dashboard"]
         self.dashboard_username = dashboard_config.get("username", "astrbot")
-        self.dashboard_host = dashboard_config.get("host","0.0.0.0")
+        self.dashboard_host = dashboard_config.get("host", "0.0.0.0")
         self.dashboard_port = dashboard_config.get("port", 6185)
         self.astrbot_password = astrbot_config.get("password", "astrbot")
 
@@ -47,10 +57,12 @@ class BrowserPlugin(Star):
         napcat_config = config.get("napcat_config", {})
         self.napcat_port: str = napcat_config.get("napcat_port", "6099")
         self.napcat_token: str = napcat_config.get("token", "napcat")
-        self.napcat_dark_themes: bool = napcat_config.get("dark_themes", False)  # 是否使用深色主题
+        self.napcat_dark_themes: bool = napcat_config.get(
+            "dark_themes", False
+        )  # 是否使用深色主题
 
         # 文件路径
-        self.plugin_data_dir = StarTools.get_data_dir("astrbot_plugin_qqadmin")
+        self.plugin_data_dir = StarTools.get_data_dir("astrbot_plugin_browser")
         self.browser_cookies_file = self.plugin_data_dir / "browser_cookies.json"
         self.favorite_file = self.plugin_data_dir / "favorite.json"
 
@@ -106,13 +118,10 @@ class BrowserPlugin(Star):
             "/astrbot面板 -打开astrbot面板\n\n"
             "/napcat面板 -打开napcat面板\n\n"
             "/浏览器帮助 -查看帮助\n\n"
-            "【可用的搜索触发词】：\n\n"
-            + "、".join(f"{k}" for k in self.favorite)
+            "【可用的搜索触发词】：\n\n" + "、".join(f"{k}" for k in self.favorite)
         )
         url = await self.text_to_image(help_text)
         yield event.image_result(url)
-
-
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def search(self, event: AstrMessageEvent):
@@ -141,12 +150,13 @@ class BrowserPlugin(Star):
         cilent_message_id = None
         group_id = event.get_group_id()
 
-
         bot_message = "正在搜索..."
         if event.get_platform_name() == "aiocqhttp":
             assert isinstance(event, AiocqhttpMessageEvent)
             client = event.bot
-            cilent_message_id = (await client.send_msg(group_id=int(group_id), message=bot_message)).get("message_id")
+            cilent_message_id = (
+                await client.send_msg(group_id=int(group_id), message=bot_message)
+            ).get("message_id")
         else:
             yield event.plain_result(bot_message)
 
@@ -158,7 +168,7 @@ class BrowserPlugin(Star):
             group_id=group_id,
             url=url,
             zoom_factor=self.zoom_factor,
-            max_pages=self.max_pages
+            max_pages=self.max_pages,
         )
         chain = await self.screenshot(group_id, result)
         yield event.chain_result(chain)  # type: ignore
@@ -166,9 +176,8 @@ class BrowserPlugin(Star):
         if cilent_message_id and event.get_platform_name() == "aiocqhttp":
             await client.delete_msg(message_id=cilent_message_id)
 
-
     @filter.command("访问")
-    async def visit(self, event: AstrMessageEvent, url:str|None=None):
+    async def visit(self, event: AstrMessageEvent, url: str | None = None):
         """访问指定链接，如/访问 链接"""
         if not url:
             yield event.plain_result("未输入链接")
@@ -185,18 +194,16 @@ class BrowserPlugin(Star):
             max_pages=self.max_pages,
         )
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("点击")
-    async def click(self, event: AstrMessageEvent, input_x:int=0, input_y:int=0):
+    async def click(self, event: AstrMessageEvent, input_x: int = 0, input_y: int = 0):
         """模拟点击指定坐标，如/点击 200 300"""
         group_id = event.get_group_id()
         coords = [input_x, input_y]
         result = await self.browser.click_coord(group_id=group_id, coords=coords)
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("输入")
     async def text_input(self, event: AstrMessageEvent):
@@ -211,11 +218,17 @@ class BrowserPlugin(Star):
             return
         result = await self.browser.text_input(group_id=group_id, text=input)
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("滑动")
-    async def swipe(self, event: AstrMessageEvent, start_x:int|None=None, start_y:int|None=None, end_x:int|None=None, end_y:int|None=None):
+    async def swipe(
+        self,
+        event: AstrMessageEvent,
+        start_x: int | None = None,
+        start_y: int | None = None,
+        end_x: int | None = None,
+        end_y: int | None = None,
+    ):
         """模拟滑动，如/滑动 100 200 300 400"""
         group_id = event.get_group_id()
         coords = [start_x, start_y, end_x, end_y]
@@ -224,22 +237,20 @@ class BrowserPlugin(Star):
             return
         result = await self.browser.swipe(group_id=group_id, coords=coords)
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("缩放")
-    async def zoom_to_scale(self, event: AstrMessageEvent, scale_factor:float=1.5):
+    async def zoom_to_scale(self, event: AstrMessageEvent, scale_factor: float = 1.5):
         """缩放网页，如/缩放 1.5"""
         group_id = event.get_group_id()
         result = await self.browser.zoom_to_scale(
             group_id=group_id, scale_factor=scale_factor
         )
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("滚动")
-    async def scroll(self, event: AstrMessageEvent) :
+    async def scroll(self, event: AstrMessageEvent):
         """滚动网页，如/滚动 上 100"""
         group_id = event.get_group_id()
         args = event.message_str.strip().split()
@@ -256,11 +267,12 @@ class BrowserPlugin(Star):
             group_id=group_id, distance=distance, direction=direction
         )
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("当前页面")
-    async def view_page(self, event: AstrMessageEvent, zoom_factor:float|None=None):
+    async def view_page(
+        self, event: AstrMessageEvent, zoom_factor: float | None = None
+    ):
         """查看当前标签页的内容"""
         group_id = event.get_group_id()
         zoom_factor = zoom_factor or self.zoom_factor
@@ -269,11 +281,12 @@ class BrowserPlugin(Star):
             zoom_factor=zoom_factor,
         ):
             chain = [Comp.Image.fromBytes(screenshot)]
-            yield event.chain_result(chain) # type: ignore
-
+            yield event.chain_result(chain)  # type: ignore
 
     @filter.command("整页")
-    async def view_full_page(self, event: AstrMessageEvent, zoom_factor:float|None=None):
+    async def view_full_page(
+        self, event: AstrMessageEvent, zoom_factor: float | None = None
+    ):
         """查看当前标签页的内容，如/当前页面 1.5"""
         group_id = event.get_group_id()
         zoom_factor = zoom_factor or self.full_page_zoom_factor or self.zoom_factor
@@ -281,8 +294,7 @@ class BrowserPlugin(Star):
             group_id=group_id, full_page=True, zoom_factor=zoom_factor
         ):
             chain = [Comp.Image.fromBytes(screenshot)]
-            yield event.chain_result(chain) # type: ignore
-
+            yield event.chain_result(chain)  # type: ignore
 
     @filter.command("上一页")
     async def go_back(self, event: AstrMessageEvent):
@@ -290,8 +302,7 @@ class BrowserPlugin(Star):
         group_id = event.get_group_id()
         result = await self.browser.go_back(group_id=group_id)
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("下一页")
     async def go_forward(self, event: AstrMessageEvent):
@@ -299,25 +310,26 @@ class BrowserPlugin(Star):
         group_id = event.get_group_id()
         result = await self.browser.go_forward(group_id=group_id)
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("标签页列表")
     async def get_all_tabs_titles(self, event: AstrMessageEvent):
         """查看当前标签页列表"""
         titles = await self.browser.get_all_tabs_titles()
-        titles_str = ("\n".join(f"{i + 1}. {title}" for i, title in enumerate(titles))) or "暂无打开中的标签页"
+        titles_str = (
+            "\n".join(f"{i + 1}. {title}" for i, title in enumerate(titles))
+        ) or "暂无打开中的标签页"
         yield event.plain_result(titles_str)
 
-
     @filter.command("标签页", alias={"切换标签页"})
-    async def switch_to_tab(self, event: AstrMessageEvent, index:int=1):
+    async def switch_to_tab(self, event: AstrMessageEvent, index: int = 1):
         """切换到指定的标签页，如/标签页 1"""
         group_id = event.get_group_id()
-        result = await self.browser.switch_to_tab(group_id=group_id, tab_index=index - 1)
+        result = await self.browser.switch_to_tab(
+            group_id=group_id, tab_index=index - 1
+        )
         chain = await self.screenshot(group_id, result)
-        yield event.chain_result(chain) # type: ignore
-
+        yield event.chain_result(chain)  # type: ignore
 
     @filter.command("关闭标签页")
     async def close_tab(self, event: AstrMessageEvent):
@@ -343,7 +355,6 @@ class BrowserPlugin(Star):
                 if result:
                     yield event.plain_result(result)
 
-
     @filter.command("关闭浏览器")
     async def close_browser(self, event: AstrMessageEvent):
         """关闭浏览器"""
@@ -352,7 +363,6 @@ class BrowserPlugin(Star):
             yield event.plain_result("浏览器已关闭")
         else:
             yield event.plain_result("没有打开中的浏览器")
-
 
     @filter.command("收藏夹", alias={"查看收藏夹"})
     async def favorite_list(self, event: AstrMessageEvent):
@@ -367,9 +377,10 @@ class BrowserPlugin(Star):
         url = await self.text_to_image(favorite_list_str)
         yield event.image_result(url)
 
-
     @filter.command("收藏", alias={"添加收藏"})
-    async def add_favorite(self, event: AstrMessageEvent, name:str|None=None, url:str|None=None):
+    async def add_favorite(
+        self, event: AstrMessageEvent, name: str | None = None, url: str | None = None
+    ):
         """添加收藏"""
         if not name or not url:
             yield event.plain_result("请输入名称和链接")
@@ -382,9 +393,8 @@ class BrowserPlugin(Star):
             json.dump(self.favorite, file, ensure_ascii=False, indent=4)
         yield event.plain_result(f"已收藏：{name}: {url}")
 
-
     @filter.command("取消收藏")
-    async def delete_favorite(self, event: AstrMessageEvent, name:str|None=None):
+    async def delete_favorite(self, event: AstrMessageEvent, name: str | None = None):
         """取消收藏"""
         if not name:
             yield event.plain_result("请输入名称")
@@ -397,10 +407,8 @@ class BrowserPlugin(Star):
             json.dump(self.favorite, file, ensure_ascii=False, indent=4)
         yield event.plain_result(f"已取消收藏：{name}")
 
-
     @filter.command("清空收藏夹", alias={"清空收藏"})
     async def clear_favorite(self, event: AstrMessageEvent):
-
         if not self.favorite:
             yield event.plain_result("收藏夹列表为空")
             return
@@ -409,9 +417,13 @@ class BrowserPlugin(Star):
             json.dump(self.favorite, file, ensure_ascii=False, indent=4)
         yield event.plain_result("已清空收藏夹")
 
-
     @filter.command("添加cookie")
-    async def add_cookies(self, event: AstrMessageEvent, url:str|None=None, cookies_str:str|None=None):
+    async def add_cookies(
+        self,
+        event: AstrMessageEvent,
+        url: str | None = None,
+        cookies_str: str | None = None,
+    ):
         """添加cookie(施工中暂不可用...)"""
         if not cookies_str:
             yield event.plain_result("未输入cookies")
@@ -419,13 +431,12 @@ class BrowserPlugin(Star):
         if not url:
             yield event.plain_result("未输入url")
             return
-        cookies_list = self.parse_cookies(url=url,cookies_str=cookies_str)
+        cookies_list = self.parse_cookies(url=url, cookies_str=cookies_str)
         result = await self.browser.add_cookies(cookies=cookies_list)
 
         group_id = event.get_group_id()
         chain = await self.screenshot(group_id, result)
         yield event.chain_result(chain)
-
 
     @filter.command("清空cookie", alias={"清除cookie"})
     async def clear_cookies(self, event: AstrMessageEvent):
@@ -433,14 +444,18 @@ class BrowserPlugin(Star):
         group_id = event.get_group_id()
         result = await self.browser.clear_cookies(
             delete_file_cookies=False
-        ) # TODO: 这里的delete_file_cookie参数需要根据实际情况设置
+        )  # TODO: 这里的delete_file_cookie参数需要根据实际情况设置
         chain = await self.screenshot(group_id, result)
         yield event.chain_result(chain)
 
-
     @filter.command("浏览器设置")
-    async def set_browser(self, event: AstrMessageEvent, viewport_width:int|None=None, viewport_height:int|None=None, zoom_factor:float|None=None):
-
+    async def set_browser(
+        self,
+        event: AstrMessageEvent,
+        viewport_width: int | None = None,
+        viewport_height: int | None = None,
+        zoom_factor: float | None = None,
+    ):
         if viewport_width:
             self.viewport_width = viewport_width
         if viewport_height:
@@ -455,9 +470,7 @@ class BrowserPlugin(Star):
         )
         yield event.plain_result(reply)
 
-
-    async def screenshot(self, group_id:str, result: str|None=None):
-
+    async def screenshot(self, group_id: str, result: str | None = None):
         chain = []
         if result:
             chain.append(Comp.Plain(result))
@@ -468,7 +481,6 @@ class BrowserPlugin(Star):
         ):
             chain.append(Comp.Image.fromBytes(screenshot))
         return chain
-
 
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("astrbot面板", alias={"Astrbot面板"})
@@ -483,15 +495,16 @@ class BrowserPlugin(Star):
 
         try:
             await self.browser.search(group_id=group_id, url=dashboard_url)
-            await self.browser.text_input(group_id=group_id, text=self.dashboard_username)
+            await self.browser.text_input(
+                group_id=group_id, text=self.dashboard_username
+            )
             await self.browser.text_input(group_id=group_id, text=self.password)
             chain = await self.screenshot(group_id)
-            yield event.chain_result(chain) # type: ignore
+            yield event.chain_result(chain)  # type: ignore
 
         except Exception as e:
             logger.error(f"Astrbot面板打开时出错：{e}")
             yield event.plain_result("Astrbot面板打不开")
-
 
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("napcat面板", alias={"Napcat面板"})
@@ -500,22 +513,22 @@ class BrowserPlugin(Star):
         group_id = event.get_group_id()
         yield event.plain_result("正在打开napcat面板...")
 
-        napcat_url = f"http://{self.dashboard_host}:{self.napcat_port}" # napcat的host应该是和astrbot的host一致的
+        napcat_url = f"http://{self.dashboard_host}:{self.napcat_port}"  # napcat的host应该是和astrbot的host一致的
         try:
             await self.browser.search(group_id=group_id, url=napcat_url)
             await self.browser.text_input(group_id=group_id, text=self.napcat_token)
             await self.browser.click_button(group_id=group_id, button_text="登录")
             if self.napcat_dark_themes:
-                await self.browser.click_button(group_id=group_id, button_text="深色主题")
+                await self.browser.click_button(
+                    group_id=group_id, button_text="深色主题"
+                )
 
             chain = await self.screenshot(group_id)
-            yield event.chain_result(chain) # type: ignore
+            yield event.chain_result(chain)  # type: ignore
 
         except Exception as e:
             logger.error(f"Napcat面板打开时出错：{e}")
             yield event.plain_result("Napcat面板打不开")
-
-
 
     @staticmethod
     def get_current_timestamps():
@@ -525,7 +538,6 @@ class BrowserPlugin(Star):
         timestamp_ms = int(current_time * 1000)  # 毫秒级时间戳
         return timestamp_s, timestamp_ms
 
-
     def format_url(self, selected_engine, keyword):
         """格式化URL"""
         if selected_engine in self.favorite:
@@ -534,7 +546,7 @@ class BrowserPlugin(Star):
             params = {
                 "keyword": keyword,
                 "timestamp_s": timestamp_s,
-                "timestamp_ms": timestamp_ms
+                "timestamp_ms": timestamp_ms,
             }
             try:
                 formatted_url = url_template.format(**params)
@@ -562,12 +574,7 @@ class BrowserPlugin(Star):
             name = parts[0].strip()
             value = parts[1].strip()
             # 处理cookie的域名
-            cookie_dict = {
-                "name": name,
-                "value": value,
-                "domain": domain,
-                "path": "/"
-            }
+            cookie_dict = {"name": name, "value": value, "domain": domain, "path": "/"}
             # 处理其他属性
             attributes = cookie.split("; ")
             for attr in attributes[1:]:
@@ -578,7 +585,11 @@ class BrowserPlugin(Star):
                     val = val.strip()
                     if key == "expires":
                         try:
-                            cookie_dict["expires"] = int(datetime.strptime(val, "%a, %d-%b-%Y %H:%M:%S GMT").timestamp())  # noqa: F821
+                            cookie_dict["expires"] = int(
+                                datetime.strptime(
+                                    val, "%a, %d-%b-%Y %H:%M:%S GMT"
+                                ).timestamp()
+                            )  # noqa: F821
                         except ValueError:
                             pass
                     elif key == "samesite":

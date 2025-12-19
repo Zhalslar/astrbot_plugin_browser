@@ -64,11 +64,14 @@ class CookieManager:
         try:
             with open(self.cookies_file, encoding="utf-8") as f:
                 raw: list[dict] = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError:
             logger.debug("Cookies 文件未找到或格式错误，返回空列表")
             self.cookies_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cookies_file, "w", encoding="utf-8") as f:
                 json.dump([], f)
+            return []
+        except json.JSONDecodeError:
+            logger.warning("Cookies 文件格式错误，无法解析，返回空列表且保留原文件")
             return []
 
         return [

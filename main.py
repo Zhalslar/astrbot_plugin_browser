@@ -1,5 +1,6 @@
 
 import os
+from pathlib import Path
 
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star, StarTools
@@ -19,7 +20,8 @@ class BrowserPlugin(Star):
 
         # 轻量组件，永远安全
         self.cookie = CookieManager(self.config, self.data_dir)
-        self.fav_mgr = FavoriteManager(self.config)
+        FAV_FILE = Path(__file__).parent / "resource" / "favorite.json"
+        self.fav_mgr = FavoriteManager(self.config, FAV_FILE)
 
         # 浏览器子系统延迟初始化
         os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(self.data_dir / "browsers")
@@ -183,6 +185,9 @@ class BrowserPlugin(Star):
         if not await self._ensure_browser_ready(event):
             return
         await self.browser.terminate()  # type: ignore
+        self.browser = None
+        self.operator = None
+        self._browser_ready = False
 
     @filter.command("查看收藏夹", alias={"收藏夹"})
     async def favorite_list(self, event: AstrMessageEvent):

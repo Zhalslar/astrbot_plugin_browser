@@ -15,13 +15,9 @@ class FavoriteManager:
     - 提供原子级 CRUD 接口
     """
 
-    FILE_PATH = Path(
-            "data/plugins/astrbot_plugin_browser/resource/favorite.json"
-        )
-
-    def __init__(self, config: AstrBotConfig) -> None:
+    def __init__(self, config: AstrBotConfig, file_path: Path) -> None:
         self._config = config
-        self._file_path: Path = self.FILE_PATH.absolute()
+        self._file_path: Path = file_path
 
         # name -> url
         self._favorites: dict[str, str] = {}
@@ -55,6 +51,7 @@ class FavoriteManager:
 
     def _save(self) -> None:
         """持久化当前收藏数据"""
+        self._file_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             with self._file_path.open("w", encoding="utf-8") as f:
                 json.dump(

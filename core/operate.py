@@ -46,13 +46,13 @@ class BrowserOperator:
         timestamp_ms = int(current_time * 1000)  # 毫秒级时间戳
         return timestamp_s, timestamp_ms
 
-    def _format_url(self, engine_name: str, keyword: str) -> str:
+    def _format_url(self, engine_name: str, keyword: str) -> str | None:
         """
         根据收藏的 URL 模板格式化搜索地址
         """
         url_template = self.fav_mgr.get(engine_name)
         if not url_template:
-            return ""
+            return None
 
         timestamp_s, timestamp_ms = self._get_current_timestamps()
         params = {
@@ -66,7 +66,7 @@ class BrowserOperator:
         except KeyError as e:
             # 缺参数就直接失败，比“悄悄删参数”更安全
             logger.warning(f"URL 模板缺少参数: {e}")
-            return ""
+            return None
 
     async def _send_screenshot(
         self,
@@ -125,6 +125,9 @@ class BrowserOperator:
             return
 
         url = self._format_url(engine, keyword)
+        if not url:
+            await event.send(event.plain_result("URL 模板错误"))
+            return
 
         client_msg_id = None
         if isinstance(event, AiocqhttpMessageEvent):

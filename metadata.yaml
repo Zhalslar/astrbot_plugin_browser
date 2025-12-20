@@ -1,7 +1,7 @@
-name: astrbot_plugin_browser # 这是你的插件的唯一识别名。
+name: astrbot_plugin_browser
 display_name: 浏览器插件
-desc: 通过操控bot与浏览器交互（搜索、点击、滑动、滚动、缩放、输入、切换标签页、收藏等等） # 插件简短描述
-help: 略  # 插件的帮助信息
-version: v1.1.4 # 插件版本号。格式：v1.1.1 或者 v1.1
-author: Zhalslar # 作者
-repo: https://github.com/Zhalslar/astrbot_plugin_browser # 插件的仓库地址
+desc: 通过操控bot与浏览器交互（搜索、点击、滑动、滚动、缩放、输入、切换标签页、收藏等等）
+help: 略
+version: v1.1.5
+author: Zhalslar
+repo: https://github.com/Zhalslar/astrbot_plugin_browser

@@ -1,1 +1,3 @@
 __pycache__/
+/core/screenshot_cache
+/core/overlay_cache

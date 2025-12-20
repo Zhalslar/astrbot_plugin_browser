@@ -25,7 +25,7 @@ class BrowserSupervisor:
     def __init__(self, config: dict):
         self.config = config
         sup_cfg: dict[str, Any] = config.get("supervisor", {})
-        self.max_memory_percent: int = sup_cfg.get("max_memory_percent", 0.8)
+        self.max_memory_percent: int = sup_cfg.get("max_memory_percent", 90)
         self.idle_timeout: int = sup_cfg.get("idle_timeout", 300)
         self.monitor_interval: float = sup_cfg.get("monitor_interval", 10.0)
 

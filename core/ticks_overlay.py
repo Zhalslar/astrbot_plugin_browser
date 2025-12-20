@@ -1,6 +1,6 @@
 import hashlib
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 

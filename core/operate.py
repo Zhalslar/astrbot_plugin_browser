@@ -1,4 +1,4 @@
-# \astrbot\core\operate.py
+# /astrbot/core/operate.py
 
 import asyncio
 import re
@@ -94,13 +94,12 @@ class BrowserOperator:
         if path:
             chain.append(Plain(path))
         supervisor = await self._require_supervisor(event)
-        raw_screenshot: str = await supervisor.call(
+        raw_screenshot: str | None = await supervisor.call(
             "screenshot", zoom_factor=zoom_factor, full_page=full_page
         )
-        screenshot_path = self.overlay.overlay_on_background(Path(raw_screenshot))
-
-        if screenshot_path:
-            chain.append(Image.fromFileSystem(screenshot_path))
+        if raw_screenshot:
+            if screenshot_path := self.overlay.overlay_on_background(Path(raw_screenshot)):
+                chain.append(Image.fromFileSystem(screenshot_path))
 
         if chain:
             await event.send(event.chain_result(chain))

@@ -1,4 +1,4 @@
-# \astrbot\core\brower.py
+# \astrbot\core\browser.py
 
 import asyncio
 import json
@@ -56,8 +56,6 @@ class BrowserCore:
         self.cache_dir = Path(__file__).resolve().parent / "screenshot_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        self.timeout = self.config["timeout"]
-
         self.browser_type: str = self.config.get("browser_type", "firefox")
         if self.browser_type not in self._BROWSER_ENGINES:
             raise ValueError(f"不支持的浏览器类型: {self.browser_type}")
@@ -88,7 +86,7 @@ class BrowserCore:
         """
         for attempt in range(retries + 1):
             try:
-                return await asyncio.wait_for(coro, self.timeout)
+                return await asyncio.wait_for(coro, self.config["timeout"])
             except asyncio.TimeoutError as e:
 
                 if attempt < retries:
@@ -336,10 +334,10 @@ class BrowserCore:
     # 页面展示
     # ======================================================
 
-    async def zoom_to_scale(self, scale_factor: float) -> str | None:
+    async def zoom_to_scale(self, scale: float) -> str | None:
         async with self._op_lock:
             page = await self._ensure_page()
-            await page.evaluate(f"document.body.style.zoom = {scale_factor};")
+            await page.evaluate(f"document.body.style.zoom = {scale};")
             return None
 
     async def screenshot(

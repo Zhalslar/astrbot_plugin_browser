@@ -62,7 +62,7 @@ async def install_browser(data_dir: Path, browser_type: str = "firefox") -> bool
         logger.error(f"playwright 安装失败: {e}")
         return False
 
-async def check_browser_installed(self, browser_type: str = "firefox") -> bool:
+async def check_browser_installed(browser_type: str = "firefox") -> bool:
     """
     检测指定浏览器是否已安装（纯检测，不弹窗口）
     :param browser_type: "firefox", "chromium", "webkit"

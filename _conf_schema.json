@@ -2,7 +2,7 @@
     "browser_type": {
         "description": "浏览器类型",
         "type": "string",
-        "hint": "firefox：兼容性好，稳定；chromium：通用性强，占用略高；webkit：资源占用低，但兼容性较弱",
+        "hint": "firefox：兼容性好，稳定；chromium：通用性强，占用略高；webkit：资源占用低，但兼容性较弱。 本插件采用firefox进行测试",
         "options": [
             "firefox",
             "chromium",

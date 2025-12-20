@@ -137,19 +137,24 @@ class BrowserSupervisor:
                     logger.warning(
                         f"[Supervisor] 浏览器闲置超过 {self.idle_timeout}s，自动关闭"
                     )
-                    await self.stop()
-                    continue
+                    async with self._lock:
+                        if self.browser:
+                            try:
+                                await self.browser.terminate()
+                            except Exception:
+                                pass
+                            self.browser = None
+                    break  # 退出监控循环，不再重复关浏览器
 
-                # 整体服务器内存监控
-                mem = psutil.virtual_memory()
-                mem_percent = mem.percent  # 已使用百分比
-                if (
-                    mem_percent > self.max_memory_percent
-                ):
-                    logger.warning(
-                        f"[Supervisor] 服务器内存占用过高 ({mem_percent:.1f}%)，自动重启浏览器"
-                    )
-                    await self._restart_browser()
+                # 整体服务器内存监控，只在浏览器存在时才触发重启
+                if self.browser:
+                    mem = psutil.virtual_memory()
+                    mem_percent = mem.percent  # 已使用百分比
+                    if mem_percent > self.max_memory_percent:
+                        logger.warning(
+                            f"[Supervisor] 服务器内存占用过高 ({mem_percent:.1f}%)，自动重启浏览器"
+                        )
+                        await self._restart_browser()
 
             except asyncio.CancelledError:
                 break

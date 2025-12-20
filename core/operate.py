@@ -94,12 +94,15 @@ class BrowserOperator:
         if path:
             chain.append(Plain(path))
         supervisor = await self._require_supervisor(event)
-        raw_screenshot: str | None = await supervisor.call(
+        screenshot: str | None = await supervisor.call(
             "screenshot", zoom_factor=zoom_factor, full_page=full_page
         )
-        if raw_screenshot:
-            if screenshot_path := self.overlay.overlay_on_background(Path(raw_screenshot)):
-                chain.append(Image.fromFileSystem(screenshot_path))
+        if screenshot:
+            if self.config["enable_overlay"]:
+                overlay_screenshot = self.overlay.overlay_on_background(Path(screenshot))
+                chain.append(Image.fromFileSystem(overlay_screenshot))
+            else:
+                chain.append(Image.fromFileSystem(screenshot))
 
         if chain:
             await event.send(event.chain_result(chain))

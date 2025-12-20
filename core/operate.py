@@ -119,6 +119,7 @@ class BrowserOperator:
         elif head in self.fav_mgr.list_names():
             engine = head
         else:
+            logger.debug(f"Unrecognized search command or engine name: {head!r}")
             return
 
         keyword = " ".join(args[1:])

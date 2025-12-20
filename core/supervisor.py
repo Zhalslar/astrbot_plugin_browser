@@ -142,12 +142,11 @@ class BrowserSupervisor:
 
                 # 整体服务器内存监控
                 mem = psutil.virtual_memory()
-                mem_percent = mem.percent  # 已使用百分比
                 if (
-                    mem_percent > self.max_memory_percent
+                    mem.percent > self.max_memory_percent  # 已使用百分比
                 ):
                     logger.warning(
-                        f"[Supervisor] 服务器内存占用过高 ({mem_percent:.1f}%)，自动重启浏览器"
+                        f"[Supervisor] 服务器内存占用过高 ({mem.percent:.1f}%)，自动重启浏览器"
                     )
                     await self._restart_browser()
 

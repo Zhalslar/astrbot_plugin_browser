@@ -11,6 +11,8 @@ from typing import Any, TypeVar
 from playwright._impl._api_structures import SetCookieParam
 from playwright.async_api import BrowserContext, Cookie, Page, async_playwright
 
+from astrbot.api import logger
+
 T = TypeVar("T")
 
 
@@ -25,13 +27,13 @@ class CookieManager:
                 raw_cookies: list[dict] = json.load(f)
                 return raw_cookies
         except FileNotFoundError:
-            print("Cookies 文件未找到或格式错误，返回空列表")
+            logger.info("Cookies 文件未找到或格式错误，返回空列表")
             self.cookies_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cookies_file, "w", encoding="utf-8") as f:
                 json.dump([], f)
             return []
         except json.JSONDecodeError:
-            print("Cookies 文件格式错误，无法解析，返回空列表且保留原文件")
+            logger.warning("Cookies 文件格式错误，无法解析，返回空列表且保留原文件")
             return []
 
     def save_cookies(self, cookies: list[dict]):

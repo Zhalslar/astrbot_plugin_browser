@@ -26,12 +26,8 @@ HELP_TEXT = (
     "/收藏夹 -查看收藏夹列表\n\n"
     "/收藏 <名称> <链接> -添加收藏\n\n"
     "/取消收藏 <名称> -取消收藏\n\n"
-    "/清空收藏夹 -清空收藏夹\n\n"
     "/添加cookie <cookie> -添加cookie(施工中暂不可用...)\n\n"
     "/清空cookie -清空cookie\n\n"
-    "/浏览器设置 <宽度> <高度> <缩放比> -设置浏览器参数\n\n"
-    "/astrbot面板 -打开astrbot面板\n\n"
-    "/napcat面板 -打开napcat面板\n\n"
     "/浏览器帮助 -查看帮助\n\n"
 )
 
@@ -62,7 +58,7 @@ async def install_browser(data_dir: Path, browser_type: str = "firefox") -> bool
         logger.error(f"playwright 安装失败: {e}")
         return False
 
-async def check_browser_installed(self, browser_type: str = "firefox") -> bool:
+async def check_browser_installed(browser_type: str = "firefox") -> bool:
     """
     检测指定浏览器是否已安装（纯检测，不弹窗口）
     :param browser_type: "firefox", "chromium", "webkit"

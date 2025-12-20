@@ -1,38 +1,14 @@
 {
-    "default_url": {
-        "description": "默认打开的网址",
+    "browser_type": {
+        "description": "浏览器类型",
         "type": "string",
-        "hint": "请输入网址",
-        "default": "https://www.baidu.com"
-    },
-    "viewport_width": {
-        "description": "视口宽度",
-        "type": "int",
-        "hint": "影响截图的宽度",
-        "default": 1920
-    },
-    "viewport_height": {
-        "description": " 视口高度",
-        "type": "int",
-        "hint": "影响截图的高度",
-        "default": 1400
-    },
-    "zoom_factor": {
-        "description": "标签页的默认缩放比",
-        "type": "float",
-        "hint": "",
-        "slider": {
-            "min": 0.1,
-            "max": 5,
-            "step": 0.1
-        },
-        "default": 1.5
-    },
-    "full_page_zoom_factor": {
-        "description": "查看整页时的默认缩放比",
-        "type": "int",
-        "hint": "0表示不改变原来的缩放比",
-        "default": 0
+        "hint": "firefox：兼容性好，稳定；chromium：通用性强，占用略高；webkit：资源占用低，但兼容性较弱",
+        "options": [
+            "firefox",
+            "chromium",
+            "webkit"
+        ],
+        "default": "firefox"
     },
     "default_search_engine": {
         "description": "默认使用的搜索引擎",
@@ -48,25 +24,8 @@
         ],
         "default": "必应搜索"
     },
-    "max_pages": {
-        "description": "允许的最大标签页数量",
-        "type": "int",
-        "hint": "打开的标签页超过这个数量时，会自动关闭最开始打开的标签页,（请根据性能设置合适的数量）",
-        "slider": {
-            "min": 1,
-            "max": 20,
-            "step": 1
-        },
-        "default": 5
-    },
-    "delete_file_cookies": {
-        "description": "清空cookies时删除存储在json中的cookies",
-        "type": "bool",
-        "hint": "注意这样会导致需要浏览器重启时重新登录",
-        "default": false
-    },
     "banned_words": {
-        "description": "禁止使用的关键词",
+        "description": "搜索违禁词",
         "type": "list",
         "hint": "屏蔽含有禁词的搜索请求、访问链接、输入文本",
         "default": [
@@ -82,6 +41,125 @@
             "诈骗",
             "病毒"
         ]
+    },
+    "default_url": {
+        "description": "默认打开的网址",
+        "type": "string",
+        "hint": "当未打开任何网页就和浏览器交互时，浏览器默认打开这个网址",
+        "default": "https://www.baidu.com"
+    },
+    "viewport_size": {
+        "description": "视口宽高",
+        "type": "object",
+        "hint": "影响截图的宽度和高度",
+        "items": {
+            "width": {
+                "description": "视口宽度",
+                "type": "int",
+                "hint": "影响截图的宽度",
+                "default": 1920
+            },
+            "height": {
+                "description": "视口高度",
+                "type": "int",
+                "hint": "影响截图的高度",
+                "default": 1400
+            }
+        }
+    },
+    "screenshot_quality": {
+        "description": "图片质量",
+        "type": "int",
+        "hint": "截图用JPEG编码，此值影响截图的质量，质量越高越清晰，但体积也越大",
+        "slider": {
+            "min": 0,
+            "max": 100,
+            "step": 1
+        },
+        "default": 65
+    },
+    "zoom_factor": {
+        "description": "网页默认缩放比",
+        "type": "float",
+        "hint": "",
+        "slider": {
+            "min": 0.1,
+            "max": 5,
+            "step": 0.1
+        },
+        "default": 1.5
+    },
+    "full_page_zoom_factor": {
+        "description": "查看整页时的默认缩放比",
+        "type": "int",
+        "hint": "0表示不改变原来的缩放比",
+        "slider": {
+            "min": 0,
+            "max": 5,
+            "step": 0.1
+        },
+        "default": 0
+    },
+    "max_pages": {
+        "description": "允许的最大标签页数量",
+        "type": "int",
+        "hint": "打开的标签页超过这个数量时，会自动关闭最开始打开的标签页,（请根据性能设置合适的数量）",
+        "slider": {
+            "min": 1,
+            "max": 20,
+            "step": 1
+        },
+        "default": 5
+    },
+    "timeout": {
+        "description": "访问超时时间(秒)",
+        "type": "int",
+        "hint": "访问网页时，超过这个时间未响应的请求将被取消",
+        "slider": {
+            "min": 1,
+            "max": 60,
+            "step": 1
+        },
+        "default": 30
+    },
+    "supervisor": {
+        "description": "监控器配置",
+        "type": "object",
+        "hint": "监控浏览器运行情况",
+        "items": {
+            "max_memory_percent": {
+                "description": "服务器内存最大允许占用百分比",
+                "hint": "当服务器总内存占用超过此百分比时，强制重启浏览器以释放资源",
+                "type": "int",
+                "slider": {
+                    "min": 10,
+                    "max": 100,
+                    "step": 1
+                },
+                "default": 90
+            },
+            "idle_timeout": {
+                "description": "浏览器闲置时间(秒)",
+                "hint": "长时间不操作浏览器时，自动关闭浏览器",
+                "type": "int",
+                "slider": {
+                    "min": 60,
+                    "max": 3600,
+                    "step": 60
+                },
+                "default": 1800
+            },
+            "monitor_interval": {
+                "description": "监控浏览器状态的检查间隔(秒)",
+                "hint": "检查浏览器状态的间隔时间，越短越及时，但占用CPU资源也会越高",
+                "type": "float",
+                "slider": {
+                    "min": 3,
+                    "max": 60,
+                    "step": 1
+                },
+                "default": 10.0
+            }
+        }
     }
-   
 }

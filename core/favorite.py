@@ -15,9 +15,9 @@ class FavoriteManager:
     - 提供原子级 CRUD 接口
     """
 
-    def __init__(self, config: AstrBotConfig, file_path: Path) -> None:
+    def __init__(self, config: AstrBotConfig) -> None:
         self._config = config
-        self._file_path: Path = file_path
+        self._file_path: Path = Path(__file__).parent / "resource" / "favorite.json"
 
         # name -> url
         self._favorites: dict[str, str] = {}

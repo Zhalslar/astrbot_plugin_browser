@@ -359,7 +359,7 @@ class BrowserCore:
                     quality=min(self.config["screenshot_quality"], 100),
                 )
 
-            raw: bytes = await self._safe_page_op(page, self._safe_await(_shot()))
+            raw: bytes = await _shot()
 
             if raw is None:  # 截图失败
                 return None

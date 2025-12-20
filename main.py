@@ -8,7 +8,7 @@ from astrbot.core.platform import AstrMessageEvent
 from .core.favorite import FavoriteManager
 from .core.operate import BrowserOperator
 from .core.ticks_overlay import TickOverlay
-from .core.utils import HELP_TEXT, install_browser
+from .core.utils import install_browser
 
 
 class BrowserPlugin(Star):

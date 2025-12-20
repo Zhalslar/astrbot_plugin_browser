@@ -114,7 +114,7 @@ class BrowserOperator:
             return
 
         args = msg.split()
-        head = args[0]
+        head = args[0].lower()
 
         if head == "搜索":
             engine = self.config.get("default_search_engine", "百度")

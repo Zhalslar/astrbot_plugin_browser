@@ -120,7 +120,7 @@ class BrowserPlugin(Star):
     @filter.command("标签页")
     async def operate_tab(self, event: AstrMessageEvent, index: int | None = None):
         """标签页 <序号|None>, 切换/查看标签页"""
-        if index and str(index).isdigit():
+        if index is not None and index > 0:
             await self.operator.switch_to_tab(event, index)
         else:
             await self.operator.get_all_tabs_titles(event)

@@ -68,7 +68,7 @@
         }
     },
     "screenshot_quality": {
-        "description": "图片质量",
+        "description": "截图质量",
         "type": "int",
         "hint": "截图用JPEG编码，此值影响截图的质量，质量越高越清晰，但体积也越大",
         "slider": {
@@ -77,6 +77,12 @@
             "step": 1
         },
         "default": 65
+    },
+    "enable_overlay":{
+        "description": "在截图上叠加刻度",
+        "type": "bool",
+        "hint": "启用后，每次截图都会在图片上叠加一层刻度，方便使用坐标点击",
+        "default": true
     },
     "zoom_factor": {
         "description": "网页默认缩放比",

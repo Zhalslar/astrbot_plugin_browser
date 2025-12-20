@@ -181,6 +181,14 @@ class BrowserPlugin(Star):
         else:
             yield event.plain_result(f"{name} 不在收藏夹中")
 
+    @filter.command("刻度")
+    async def switch_overlay(self, event: AstrMessageEvent, mode: str = "开"):
+        """刻度 开/关, 决定截图是否附加刻度"""
+        switch = mode == "开"
+        self.config["enable_overlay"] = switch
+        self.config.save_config()
+        yield event.plain_result(f"截图上的刻度已{'开' if switch else '关'}")
+
     @filter.command("浏览器帮助")
     async def help(self, event: AstrMessageEvent):
         """浏览器帮助"""

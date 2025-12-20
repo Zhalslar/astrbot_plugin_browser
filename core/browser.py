@@ -169,7 +169,7 @@ class BrowserCore:
                     pass
 
             # 保存 cookies
-            await safe_close(self.save_cookies, "save_cookies")
+            await self.save_cookies()
 
             # 关闭所有 Page
             for page in self.all_pages:

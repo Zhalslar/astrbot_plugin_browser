@@ -189,8 +189,3 @@ class BrowserPlugin(Star):
         self.config.save_config()
         yield event.plain_result(f"截图上的刻度已{'开' if switch else '关'}")
 
-    @filter.command("浏览器帮助")
-    async def help(self, event: AstrMessageEvent):
-        """浏览器帮助"""
-        url = await self.text_to_image(HELP_TEXT)
-        yield event.image_result(url)

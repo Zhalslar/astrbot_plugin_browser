@@ -50,7 +50,6 @@
     "网易云搜索": "https://music.163.com/#/search/m/?s={keyword}",
     "QQ音乐搜索": "https://y.qq.com/n/ryqq/search?w={keyword}",
     "酷狗搜索": "https://www.kugou.com/yy/html/search.html#searchType=song&searchKeyWord={keyword}",
-    "napcat文档": "https://www.napcat.wiki/develop/api",
     "gocq文档": "https://docs.go-cqhttp.org/api",
     "onebot文档": "https://github.com/botuniverse/onebot-11/blob/master/api/public.md",
     "astrbot文档": "https://astrbot.app/",
@@ -59,7 +58,5 @@
     "羽兔网搜索": "https://www.yutu.cn/search/soft.html?t=10&k={keyword}",
     "美女壁纸": "https://netsmell.com/wallpaper",
     "微信公众号平台": "https://mp.weixin.qq.com",
-    "大疆搜索": "https://store.dji.com/cn/product-search?q={keyword}",
-    "AuroraAPI": "https://api.andeer.top",
-    "枫林API": "https://api.yuafeng.cn"
+    "大疆搜索": "https://store.dji.com/cn/product-search?q={keyword}"
 }

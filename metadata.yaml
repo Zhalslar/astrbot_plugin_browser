@@ -2,6 +2,6 @@ name: astrbot_plugin_browser
 display_name: 浏览器插件
 desc: 通过操控bot与浏览器交互（搜索、点击、滑动、滚动、缩放、输入、切换标签页、收藏等等）
 help: 略
-version: v1.1.5
+version: v2.0.0
 author: Zhalslar
 repo: https://github.com/Zhalslar/astrbot_plugin_browser

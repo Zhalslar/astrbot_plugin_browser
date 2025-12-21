@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 from astrbot.api import logger
-from astrbot.core.config.astrbot_config import AstrBotConfig
 
 
 class FavoriteManager:
@@ -15,9 +14,8 @@ class FavoriteManager:
     - 提供原子级 CRUD 接口
     """
 
-    def __init__(self, config: AstrBotConfig) -> None:
-        self._config = config
-        self._file_path: Path = Path(__file__).parent / "resource" / "favorite.json"
+    def __init__(self, file_path: Path) -> None:
+        self.file_path = file_path
 
         # name -> url
         self._favorites: dict[str, str] = {}
@@ -30,12 +28,12 @@ class FavoriteManager:
 
     def _load(self) -> None:
         """加载收藏数据（失败时回退为空）"""
-        if not self._file_path.exists():
+        if not self.file_path.exists():
             self._save()
             return
 
         try:
-            with self._file_path.open("r", encoding="utf-8") as f:
+            with self.file_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, dict):
                     self._favorites = {str(k): str(v) for k, v in data.items()}
@@ -51,9 +49,9 @@ class FavoriteManager:
 
     def _save(self) -> None:
         """持久化当前收藏数据"""
-        self._file_path.parent.mkdir(parents=True, exist_ok=True)
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with self._file_path.open("w", encoding="utf-8") as f:
+            with self.file_path.open("w", encoding="utf-8") as f:
                 json.dump(
                     self._favorites,
                     f,

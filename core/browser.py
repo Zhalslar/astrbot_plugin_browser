@@ -16,8 +16,8 @@ T = TypeVar("T")
 
 
 class CookieManager:
-    def __init__(self):
-        self.cookies_file = Path(__file__).resolve().parent / "browser_cookies.json"
+    def __init__(self, data_dir: Path):
+        self.cookies_file = data_dir / "browser_cookies.json"
 
     def load_cookies(self) -> list[dict]:
         """从 json 文件加载 cookies，返回 List[Cookie]（TypedDict）"""
@@ -49,11 +49,11 @@ class BrowserCore:
 
     _BROWSER_ENGINES = {"firefox", "chromium", "webkit"}
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, data_dir: Path):
         self.config = config
-        self.cookie = CookieManager()
+        self.cookie = CookieManager(data_dir)
 
-        self.cache_dir = Path(__file__).resolve().parent / "screenshot_cache"
+        self.cache_dir = data_dir / "screenshot_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         self.browser_type: str = self.config.get("browser_type", "firefox")

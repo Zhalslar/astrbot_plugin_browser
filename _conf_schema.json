@@ -10,6 +10,12 @@
         ],
         "default": "firefox"
     },
+    "verify_browser": {
+        "description": "验证浏览器",
+        "type": "bool",
+        "hint": "启用后，每次启动浏览器时，会检查浏览器是否已安装并可用，建议在验证完可用性后关闭，关闭后可减少浏览器启动耗时",
+        "default": true
+    },
     "default_search_engine": {
         "description": "默认使用的搜索引擎",
         "type": "string",

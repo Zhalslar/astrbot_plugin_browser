@@ -1,10 +1,7 @@
 # /astrbot/core/operate.py
-
-import asyncio
 import re
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from astrbot.api import logger
 from astrbot.core.config.astrbot_config import AstrBotConfig
@@ -15,11 +12,9 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 )
 
 from .favorite import FavoriteManager
+from .supervisor import BrowserSupervisor
 from .ticks_overlay import TickOverlay
-from .utils import check_browser_installed
 
-if TYPE_CHECKING:
-    from .supervisor import BrowserSupervisor
 
 class BrowserOperator:
     """
@@ -34,27 +29,12 @@ class BrowserOperator:
         config: AstrBotConfig,
         fav_mgr: FavoriteManager,
         overlay: TickOverlay,
+        supervisor: BrowserSupervisor,
     ):
         self.config = config
         self.fav_mgr = fav_mgr
         self.overlay = overlay
-        self.supervisor = None
-        self._supervisor_lock = asyncio.Lock()
-
-    # ================= 浏览器依赖 ===================
-    async def _require_supervisor(self, event: AstrMessageEvent) -> "BrowserSupervisor":
-        async with self._supervisor_lock:
-            if self.supervisor is not None:
-                return self.supervisor
-            if not await check_browser_installed(self.config["browser_type"]):
-                await event.send(event.plain_result("请先发送命令：安装浏览器"))
-                raise Exception("浏览器未安装，请先在聊天窗口发送命令：安装浏览器")
-            # 真正初始化
-            from .supervisor import BrowserSupervisor
-
-            self.supervisor = BrowserSupervisor(self.config.copy())
-            await self.supervisor.start()
-            return self.supervisor
+        self.supervisor = supervisor
 
     # ================= 内部工具 ==================
 
@@ -93,8 +73,7 @@ class BrowserOperator:
 
         if path:
             chain.append(Plain(path))
-        supervisor = await self._require_supervisor(event)
-        screenshot: str | None = await supervisor.call(
+        screenshot: str | None = await self.supervisor.call(
             "screenshot", zoom_factor=zoom_factor, full_page=full_page
         )
         if screenshot:
@@ -144,8 +123,10 @@ class BrowserOperator:
             ).get("message_id")
         else:
             await event.send(event.plain_result("正在搜索..."))
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("search", url=url)
+
+        logger.info(f"正在访问: {url}")
+        result_path = await self.supervisor.call("search", url=url)
+
         await self.send_screenshot(event, result_path)
 
         if isinstance(event, AiocqhttpMessageEvent) and client_msg_id:
@@ -159,14 +140,12 @@ class BrowserOperator:
             await event.send(event.plain_result("访问链接包含禁词"))
             return
         await event.send(event.plain_result("访问中..."))
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("search", url=url)
+        result_path = await self.supervisor.call("search", url=url)
         await self.send_screenshot(event, result_path)
 
     # ================= 页面交互 ==================
     async def click(self, event: AstrMessageEvent, x: int = 0, y: int = 0):
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("click_coord", coords=[x, y])
+        result_path = await self.supervisor.call("click_coord", coords=[x, y])
         await self.send_screenshot(event, result_path)
 
     async def text_input(self, event: AstrMessageEvent):
@@ -177,8 +156,7 @@ class BrowserOperator:
         if self._contains_banned(text):
             await event.send(event.plain_result("输入内容包含禁词"))
             return
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("text_input", text=text)
+        result_path = await self.supervisor.call("text_input", text=text)
         await self.send_screenshot(event, result_path)
 
     async def swipe(self, event: AstrMessageEvent, sx=None, sy=None, ex=None, ey=None):
@@ -188,44 +166,38 @@ class BrowserOperator:
                 event.plain_result("应提供 4 个整数：起始X 起始Y 结束X 结束Y")
             )
             return
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("swipe", coords=coords)
+        result_path = await self.supervisor.call("swipe", coords=coords)
         await self.send_screenshot(event, result_path)
 
     async def scroll(self, event: AstrMessageEvent):
         args = event.message_str.split()
-        direction, distance = "下", 300
+        direction, distance = "下", 1300
         for arg in args:
             if arg in {"上", "下", "左", "右"}:
                 direction = arg
             elif arg.isdigit():
                 distance = int(arg)
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call(
+        result_path = await self.supervisor.call(
             "scroll_by", distance=distance, direction=direction
         )
         await self.send_screenshot(event, result_path)
 
     async def zoom_to_scale(self, event: AstrMessageEvent, scale: float = 1.5):
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("zoom_to_scale", scale=scale)
+        result_path = await self.supervisor.call("zoom_to_scale", scale=scale)
         await self.send_screenshot(event, result_path)
 
     # ================= 页面浏览 ==================
     async def go_back(self, event: AstrMessageEvent):
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("go_back")
+        result_path = await self.supervisor.call("go_back")
         await self.send_screenshot(event, result_path)
 
     async def go_forward(self, event: AstrMessageEvent):
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("go_forward")
+        result_path = await self.supervisor.call("go_forward")
         await self.send_screenshot(event, result_path)
 
     # ================= 标签页管理 ==================
     async def get_all_tabs_titles(self, event: AstrMessageEvent):
-        supervisor = await self._require_supervisor(event)
-        titles = await supervisor.call("get_all_tabs_titles")
+        titles = await self.supervisor.call("get_all_tabs_titles")
         if not titles:
             await event.send(event.plain_result("暂无打开中的标签页"))
             return
@@ -234,8 +206,7 @@ class BrowserOperator:
         )
 
     async def switch_to_tab(self, event: AstrMessageEvent, index: int = 1):
-        supervisor = await self._require_supervisor(event)
-        result_path = await supervisor.call("switch_tab", index=index - 1)
+        result_path = await self.supervisor.call("switch_tab", index=index - 1)
         await self.send_screenshot(event, result_path)
 
     async def close_tab(self, event: AstrMessageEvent):
@@ -244,22 +215,28 @@ class BrowserOperator:
             await event.send(event.plain_result("未指定要关闭的标签页"))
             return
         for idx in sorted(nums, reverse=True):
-            supervisor = await self._require_supervisor(event)
-            result_msg = await supervisor.call("close_tab", index=idx - 1)
+            result_msg = await self.supervisor.call("close_tab", index=idx - 1)
             if result_msg:
                 await event.send(event.plain_result(result_msg))
 
     async def close_browser(self, event: AstrMessageEvent | None = None):
-        if self.supervisor:
-            try:
-                await self.supervisor.stop()
-                logger.info("已关闭浏览器")
-                if event:
-                    await event.send(event.plain_result("已关闭浏览器"))
-            except Exception as e:
-                logger.error(f"关闭浏览器时发生错误：{e}")
-                if event:
-                    await event.send(event.plain_result(f"关闭浏览器时出错: {e}"))
-        elif event:
-            logger.warning("未开启浏览器")
-            await event.send(event.plain_result("未开启浏览器"))
+        if not self.supervisor:
+            if event:
+                await event.send(event.plain_result("未开启浏览器的监控器"))
+            return
+
+        if not self.supervisor.browser:
+            if event:
+                await event.send(event.plain_result("未开启浏览器"))
+            return
+
+        try:
+            await self.supervisor._stop_browser()
+            logger.info("已关闭浏览器")
+            if event:
+                await event.send(event.plain_result("已关闭浏览器"))
+        except Exception as e:
+            logger.error(f"关闭浏览器时发生错误：{e}")
+            if event:
+                await event.send(event.plain_result(f"关闭浏览器时出错: {e}"))
+

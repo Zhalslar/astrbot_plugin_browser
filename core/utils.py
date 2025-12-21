@@ -1,4 +1,3 @@
-
 import asyncio
 import os
 import sys
@@ -7,31 +6,62 @@ from pathlib import Path
 from astrbot.api import logger
 
 
-async def install_browser(data_dir: Path, browser_type: str = "firefox") -> bool:
+async def generic_install(
+    *cmd: str,
+    extra_env: dict | None = None,
+) -> bool:
     """
-    静默安装指定的 Playwright 浏览器
-    :param data_dir: Playwright 安装目录
-    :param browser_type: 安装的浏览器，可选 "firefox", "chromium", "webkit"
-    :return: 成功 True / 失败 False
+    通用异步安装器
+    :param cmd: 完整命令序列，如 [sys.executable, "-m", "pip", "install", "playwright"]
+    :param extra_env: 额外环境变量
+    :return: 是否成功
     """
-    env = os.environ.copy()
-    env["PLAYWRIGHT_BROWSERS_PATH"] = str(data_dir / "browsers")
-    try:
-        logger.info(f"正在安装 {browser_type} 浏览器...")
-        proc = await asyncio.create_subprocess_exec(
-            sys.executable,
-            "-m",
-            "playwright",
-            "install",
-            browser_type,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-            env=env,
+    env = {**os.environ, **(extra_env or {})}
+    cmd_str = " ".join(cmd)
+    logger.info(f"执行安装命令：{cmd_str}")
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=env,
+    )
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        logger.error(
+            "安装失败，返回码 %s\nstdout: %s\nstderr: %s",
+            proc.returncode,
+            stdout.decode(errors="ignore"),
+            stderr.decode(errors="ignore"),
         )
-        return (await proc.wait()) == 0
-    except FileNotFoundError as e:
-        logger.error(f"playwright 安装失败: {e}")
         return False
+    logger.info(f"安装成功：{cmd_str}")
+    return True
+
+
+async def install_playwright_package() -> bool:
+    """装 playwright PyPI 包"""
+    return await generic_install(
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-U",
+        "playwright",
+    )
+
+
+async def install_browser_bin(data_dir: Path, browser_type: str = "firefox") -> bool:
+    """装浏览器二进制"""
+    extra_env = {"PLAYWRIGHT_BROWSERS_PATH": str(data_dir / "browsers")}
+    return await generic_install(
+        sys.executable,
+        "-m",
+        "playwright",
+        "install",
+        browser_type,
+        extra_env=extra_env,
+    )
+
 
 async def check_browser_installed(browser_type: str = "firefox") -> bool:
     """
@@ -51,7 +81,5 @@ async def check_browser_installed(browser_type: str = "firefox") -> bool:
             browser = await browser_launcher.launch(headless=True)
             await browser.close()
         return True
-    except Exception as e:
-        logger.exception(f"检测浏览器失败 ({browser_type}): {e}")
+    except Exception:
         return False
-

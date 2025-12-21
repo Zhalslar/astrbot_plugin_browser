@@ -20,12 +20,10 @@ class TickOverlay:
     # -------------------- 交点半径 --------------------
     DOT_RADIUS: int = 1
 
-    def __init__(self):
-        core_dir = Path(__file__).resolve().parent
-        self.resource_dir = core_dir / "resource"
-        self.cache_dir = core_dir / "overlay_cache"
-        self.font_path = self.resource_dir / "kaiti_GB2312.ttf"
-        self.scale_path = self.resource_dir / "ticks_overlay.png"
+    def __init__(self, data_dir: Path, resource_dir: Path):
+        self.cache_dir = data_dir / "overlay_cache"
+        self.font_path = resource_dir / "kaiti_GB2312.ttf"
+        self.scale_path = resource_dir / "ticks_overlay.png"
 
         # 基础参数
         self.width = 4000

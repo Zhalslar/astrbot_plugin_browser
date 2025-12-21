@@ -1,14 +1,16 @@
-import os
+
+from pathlib import Path
 
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star, StarTools
 from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.platform import AstrMessageEvent
 
+from .core.downloader import BrowserDownloader
 from .core.favorite import FavoriteManager
 from .core.operate import BrowserOperator
+from .core.supervisor import BrowserSupervisor
 from .core.ticks_overlay import TickOverlay
-from .core.utils import install_browser
 
 
 class BrowserPlugin(Star):
@@ -17,20 +19,28 @@ class BrowserPlugin(Star):
         self.config = config
         # 数据目录
         self.data_dir = StarTools.get_data_dir("astrbot_plugin_browser")
-        # 浏览器环境
-        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(self.data_dir / "browsers")
-
+        # 资源目录
+        self.resource_dir = Path(__file__).resolve().parent / "resource"
+        # 收藏夹文件
+        self.favorite_file: Path = Path(__file__).parent / "favorite.json"
 
     # ================= 生命周期 ===================
 
     async def initialize(self):
         """插件加载时触发"""
+        # 下载器
+        self.downloader = BrowserDownloader(self.data_dir)
         # 收藏夹管理器
-        self.fav_mgr = FavoriteManager(self.config)
+        self.fav_mgr = FavoriteManager(self.config, self.favorite_file)
         # 刻度器
-        self.overlay = TickOverlay()
+        self.overlay = TickOverlay(self.data_dir, self.resource_dir)
+        #  监控器
+        self.supervisor = BrowserSupervisor(self.config.copy(), str(self.data_dir))
+        await self.supervisor.start()
         # 浏览器操作器
-        self.operator = BrowserOperator(self.config, self.fav_mgr, self.overlay)
+        self.operator = BrowserOperator(
+            self.config, self.fav_mgr, self.overlay, self.supervisor
+        )
 
     async def terminate(self):
         """插件卸载时触发，关闭浏览器及监控"""
@@ -40,11 +50,18 @@ class BrowserPlugin(Star):
     # ================= 浏览器依赖 ===================
 
     @filter.command("安装浏览器")
-    async def install_browser(self, event: AstrMessageEvent):
+    async def install_browser(
+        self, event: AstrMessageEvent, browser_type: str | None = None
+    ):
         """安装 Playwright 浏览器依赖"""
-        yield event.plain_result("开始安装浏览器组件…")
-        ok = await install_browser(self.data_dir, self.config["browser_type"])
-        msg = "浏览器组件安装完成" if ok else "浏览器安装失败，请检查日志"
+        browser_type = browser_type or self.config["browser_type"]
+        yield event.plain_result(f"正在安装 {browser_type} 浏览器...")
+        ok = await self.downloader.download(browser_type)
+        msg = (
+            f"{browser_type} 浏览器安装完成"
+            if ok
+            else f"{browser_type} 浏览器安装失败，请检查日志"
+        )
         yield event.plain_result(msg)
 
     # ================= 浏览器命令 ===================
@@ -188,4 +205,3 @@ class BrowserPlugin(Star):
         self.config["enable_overlay"] = switch
         self.config.save_config()
         yield event.plain_result(f"截图上的刻度已{'开' if switch else '关'}")
-

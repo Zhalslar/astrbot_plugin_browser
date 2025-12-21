@@ -67,22 +67,22 @@ class BrowserSupervisor:
                 self.browser = None
 
     # ---------------- 对外调用 ----------------
-    async def call(self, method: str, **kwargs) -> Any:
-        """线程安全地调用 BrowserCore 方法；失败自动重启"""
+    async def call(self, method: str, **kwargs):
         async with self._call_lock:
             if not self.browser:
                 await self._start_browser()
-            if not self.browser:  # 仍 None 说明安装/启动失败
-                return None  # 静默失败
 
-            func = getattr(self.browser, method, None)
+            async with self._browser_lock:
+                browser = self.browser
+                if not browser:
+                    return None
+                func = getattr(browser, method, None)
+
             if func is None:
                 raise AttributeError(f"BrowserCore 没有方法 {method}")
-            try:
-                self._last_active = time.time()
-                return await func(**kwargs)
-            except Exception:
-                raise  # 让上层拿到原始异常
+
+            self._last_active = time.time()
+            return await func(**kwargs)
 
     # ---------------- 内部浏览器启动/重启 ----------------
     async def _start_browser(self):

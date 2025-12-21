@@ -171,7 +171,7 @@ class BrowserOperator:
 
     async def scroll(self, event: AstrMessageEvent):
         args = event.message_str.split()
-        direction, distance = "下", 300
+        direction, distance = "下", 1300
         for arg in args:
             if arg in {"上", "下", "左", "右"}:
                 direction = arg

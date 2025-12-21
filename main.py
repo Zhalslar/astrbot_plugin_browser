@@ -31,7 +31,7 @@ class BrowserPlugin(Star):
         # 下载器
         self.downloader = BrowserDownloader(self.data_dir)
         # 收藏夹管理器
-        self.fav_mgr = FavoriteManager(self.config, self.favorite_file)
+        self.fav_mgr = FavoriteManager(self.favorite_file)
         # 刻度器
         self.overlay = TickOverlay(self.data_dir, self.resource_dir)
         #  监控器

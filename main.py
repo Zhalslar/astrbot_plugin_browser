@@ -56,12 +56,7 @@ class BrowserPlugin(Star):
         """安装 Playwright 浏览器依赖"""
         browser_type = browser_type or self.config["browser_type"]
         yield event.plain_result(f"正在安装 {browser_type} 浏览器...")
-        ok = await self.downloader.download(browser_type)
-        msg = (
-            f"{browser_type} 浏览器安装完成"
-            if ok
-            else f"{browser_type} 浏览器安装失败，请检查日志"
-        )
+        ok, msg = await self.downloader.download(browser_type)
         yield event.plain_result(msg)
 
     # ================= 浏览器命令 ===================

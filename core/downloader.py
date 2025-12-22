@@ -32,6 +32,7 @@ class BrowserDownloader:
     def __init__(self, data_dir: Path) -> None:
         self.data_dir = data_dir
         self.browsers_dir = data_dir / "browsers"
+        self.browsers_dir.mkdir(parents=True, exist_ok=True)
 
         self.env = os.environ.copy()
         self.env["PLAYWRIGHT_BROWSERS_PATH"] = str(self.browsers_dir)

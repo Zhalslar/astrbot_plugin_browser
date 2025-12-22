@@ -5,7 +5,9 @@ Production-ready Playwright browser downloader
 特性：
 - Virtualenv safe
 - Concurrent safe
-- 单次调用只处理一个浏览器
+- 同一浏览器只允许一个下载任务
+- 重复触发会复用当前下载任务
+- 返回 (bool, message)
 - 下载完成后自动验证可启动性
 """
 
@@ -19,18 +21,13 @@ from astrbot.api import logger
 
 
 class BrowserDownloader:
-    """
-    Playwright 浏览器下载器（生产级）
-
-    download() 是原子操作：
-    - 安装 playwright（如需要）
-    - 安装 browser（如需要）
-    - 验证 browser 可启动
-    """
-
     _SUPPORTED = {"firefox", "chromium", "webkit"}
 
+    # 全局锁：防止 playwright install 竞态
     _global_lock = asyncio.Lock()
+
+    # ★ 每个 browser 一个下载任务
+    _download_tasks: dict[str, asyncio.Task] = {}
 
     def __init__(self, data_dir: Path) -> None:
         self.data_dir = data_dir
@@ -39,35 +36,67 @@ class BrowserDownloader:
         self.env = os.environ.copy()
         self.env["PLAYWRIGHT_BROWSERS_PATH"] = str(self.browsers_dir)
 
-        # ★ 关键：同步到当前 Python 进程，供 async_playwright 使用
+        # 同步到当前进程，供 async_playwright 使用
         os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(self.browsers_dir)
-        logger.debug(f"PLAYWRIGHT_BROWSERS_PATH: {self.browsers_dir}")
 
+        logger.debug(f"PLAYWRIGHT_BROWSERS_PATH = {self.browsers_dir}")
 
     # ================== public ==================
 
-    async def download(self, browser: str) -> bool:
+    async def download(self, browser: str) -> tuple[bool, str]:
+        """
+        下载指定浏览器（幂等）
+        - 返回 (success, message)
+        - 若已有下载任务，直接复用
+        """
         if browser not in self._SUPPORTED:
-            raise ValueError(f"不支持的浏览器类型: {browser}")
+            return False, f"不支持的浏览器类型: {browser}"
 
+        # ★ 已有下载任务 → 复用
+        task = self._download_tasks.get(browser)
+        if task:
+            logger.info(f"{browser} 已有下载任务，复用中")
+            return await task
+
+        # ★ 创建新任务
+        task = asyncio.create_task(self._download_impl(browser))
+        self._download_tasks[browser] = task
+
+        try:
+            return await task
+        finally:
+            # 清理 task（无论成功失败）
+            self._download_tasks.pop(browser, None)
+
+    # ================== core ==================
+
+    async def _download_impl(self, browser: str) -> tuple[bool, str]:
         async with self._global_lock:
-            if not await self._ensure_playwright():
-                return False
+            ok, msg = await self._ensure_playwright()
+            if not ok:
+                return False, msg
 
             if await self._browser_installed(browser):
-                # 已存在也要验证一次，防止残缺安装
-                return await self.verify_browser(browser)
+                logger.info(f"{browser} 已存在，进行完整性验证")
+                if await self.verify_browser(browser):
+                    return True, f"{browser} 已安装且可用"
+                else:
+                    logger.warning(f"{browser} 已存在但不可用，重新安装")
 
-            if not await self._install_browser(browser):
-                return False
+            ok, msg = await self._install_browser(browser)
+            if not ok:
+                return False, msg
 
-            return await self.verify_browser(browser)
+            if await self.verify_browser(browser):
+                return True, f"{browser} 下载并验证成功"
+
+            return False, f"{browser} 下载完成，但启动验证失败"
 
     # ================== playwright ==================
 
-    async def _ensure_playwright(self) -> bool:
+    async def _ensure_playwright(self) -> tuple[bool, str]:
         if await self._run("playwright", "--version"):
-            return True
+            return True, "playwright 已就绪"
 
         logger.info("playwright 未安装，开始安装（当前虚拟环境）")
 
@@ -85,12 +114,14 @@ class BrowserDownloader:
         _, stderr = await proc.communicate()
 
         if proc.returncode != 0:
-            logger.error(
-                f"pip install playwright 失败：\n{stderr.decode(errors='ignore')}"
-            )
-            return False
+            err = stderr.decode(errors="ignore")
+            logger.error(f"pip install playwright 失败:\n{err}")
+            return False, "playwright 安装失败"
 
-        return await self._run("playwright", "--version")
+        if await self._run("playwright", "--version"):
+            return True, "playwright 安装成功"
+
+        return False, "playwright 安装完成但无法运行"
 
     # ================== browser ==================
 
@@ -100,15 +131,14 @@ class BrowserDownloader:
 
         prefix = f"{browser}-"
         try:
-            for p in self.browsers_dir.iterdir():
-                if p.is_dir() and p.name.startswith(prefix):
-                    return True
+            return any(
+                p.is_dir() and p.name.startswith(prefix)
+                for p in self.browsers_dir.iterdir()
+            )
         except Exception:
             return False
 
-        return False
-
-    async def _install_browser(self, browser: str) -> bool:
+    async def _install_browser(self, browser: str) -> tuple[bool, str]:
         logger.info(f"开始下载 {browser}")
 
         proc = await asyncio.create_subprocess_exec(
@@ -126,14 +156,12 @@ class BrowserDownloader:
 
         if proc.returncode == 0:
             logger.info(f"{browser} 下载完成")
-            return True
+            return True, f"{browser} 下载完成"
 
-        logger.error(
-            f"{browser} 下载失败\n"
-            f"stdout:\n{stdout.decode(errors='ignore')}\n"
-            f"stderr:\n{stderr.decode(errors='ignore')}"
-        )
-        return False
+        out = stdout.decode(errors="ignore")
+        err = stderr.decode(errors="ignore")
+        logger.error(f"{browser} 下载失败\nstdout:\n{out}\nstderr:\n{err}")
+        return False, f"{browser} 下载失败"
 
     @staticmethod
     async def verify_browser(browser: str) -> bool:
@@ -143,8 +171,7 @@ class BrowserDownloader:
         logger.debug(f"验证 {browser} 可启动性")
         try:
             from playwright.async_api import async_playwright
-        except ModuleNotFoundError as e:
-            logger.error(f"playwright 包仍未就绪，无法验证浏览器: {e}")
+        except ModuleNotFoundError:
             return False
 
         try:
@@ -152,7 +179,6 @@ class BrowserDownloader:
                 launcher = getattr(p, browser)
                 b = await launcher.launch(headless=True)
                 await b.close()
-            logger.debug(f"{browser} 验证通过")
             return True
         except Exception as e:
             logger.error(f"{browser} 启动验证失败: {e}")

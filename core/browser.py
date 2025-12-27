@@ -10,7 +10,14 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from playwright._impl._api_structures import SetCookieParam
-from playwright.async_api import BrowserContext, Cookie, Page, async_playwright
+from playwright.async_api import (
+    Browser,
+    BrowserContext,
+    Cookie,
+    Page,
+    Playwright,
+    async_playwright,
+)
 
 T = TypeVar("T")
 
@@ -60,8 +67,8 @@ class BrowserCore:
         if self.browser_type not in self._BROWSER_ENGINES:
             raise ValueError(f"不支持的浏览器类型: {self.browser_type}")
 
-        self.playwright = None
-        self.browser = None
+        self.playwright: Playwright | None = None
+        self.browser: Browser | None = None
         self.context: BrowserContext | None = None
 
         self.all_pages: list[Page] = []
@@ -77,7 +84,7 @@ class BrowserCore:
     # 通用兜底工具
     # ======================================================
 
-    async def _safe_await(self, coro: Coroutine[Any, Any, T], retries: int = 2) -> T: # type: ignore
+    async def _safe_await(self, coro: Coroutine[Any, Any, T], retries: int = 2) -> T:  # type: ignore
         """
         Playwright 操作超时重试机制
         :param coro: 协程
@@ -88,7 +95,6 @@ class BrowserCore:
             try:
                 return await asyncio.wait_for(coro, self.config["timeout"])
             except asyncio.TimeoutError as e:
-
                 if attempt < retries:
                     await asyncio.sleep(0.5)  # 等待再重试
                 else:
@@ -136,7 +142,8 @@ class BrowserCore:
             )
 
             self.context = await self.browser.new_context(
-                viewport=self.config.get("viewport_size"),
+                viewport=self.config["viewport_size"] or None,
+                proxy=self.config["proxy"] or None,
             )
 
             raw_cookies = self.cookie.load_cookies()
@@ -319,7 +326,6 @@ class BrowserCore:
                 return f"无效的标签页序号 {index}"
             await self._ensure_page(index)
 
-
     async def close_tab(self, index: int) -> str:
         async with self._op_lock:
             if not (0 <= index < len(self.all_pages)):
@@ -441,7 +447,6 @@ class BrowserCore:
                 page.remove_listener("popup", on_popup)
 
         return None
-
 
     async def scroll_by(self, distance: int, direction: str) -> str | None:
         async with self._op_lock:

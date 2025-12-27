@@ -99,7 +99,7 @@
             "max": 5,
             "step": 0.1
         },
-        "default": 1.5
+        "default": 1.0
     },
     "full_page_zoom_factor": {
         "description": "查看整页时的默认缩放比",

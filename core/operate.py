@@ -103,10 +103,7 @@ class BrowserOperator:
             return
 
         keyword = " ".join(args[1:])
-        if not keyword:
-            await event.send(event.plain_result("未指定搜索关键词"))
-            return
-        if self._contains_banned(keyword):
+        if keyword and self._contains_banned(keyword):
             await event.send(event.plain_result("搜索关键词包含禁词"))
             return
 

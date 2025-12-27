@@ -54,6 +54,12 @@
         "hint": "当未打开任何网页就和浏览器交互时，浏览器默认打开这个网址",
         "default": "https://www.baidu.com"
     },
+    "proxy": {
+        "description": "HTTP代理地址",
+        "type": "string",
+        "hint": "用于需要外部网络请求的功能。例如: http://127.0.0.1:7890，留空则直连",
+        "default": ""
+    },
     "viewport_size": {
         "description": "视口宽高",
         "type": "object",

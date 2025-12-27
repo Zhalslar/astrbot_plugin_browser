@@ -134,6 +134,43 @@
         },
         "default": 30
     },
+    "proxy": {
+        "description": "代理配置",
+        "type": "object",
+        "hint": "配置浏览器使用的代理服务器，用于访问需要代理的网站（如YouTube等）",
+        "items": {
+            "enabled": {
+                "description": "启用代理",
+                "type": "bool",
+                "hint": "是否启用代理服务器",
+                "default": false
+            },
+            "server": {
+                "description": "代理服务器地址",
+                "type": "string",
+                "hint": "代理服务器地址，格式：http://host:port 或 https://host:port 或 socks5://host:port，例如：http://127.0.0.1:7890",
+                "default": ""
+            },
+            "username": {
+                "description": "代理用户名",
+                "type": "string",
+                "hint": "如果代理服务器需要认证，请填写用户名，否则留空",
+                "default": ""
+            },
+            "password": {
+                "description": "代理密码",
+                "type": "string",
+                "hint": "如果代理服务器需要认证，请填写密码，否则留空",
+                "default": ""
+            },
+            "bypass": {
+                "description": "代理绕过列表",
+                "type": "string",
+                "hint": "不使用代理的域名列表，用逗号分隔，支持通配符，例如：*.local,*.cn,localhost",
+                "default": ""
+            }
+        }
+    },
     "supervisor": {
         "description": "监控器配置",
         "type": "object",

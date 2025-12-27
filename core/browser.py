@@ -135,9 +135,17 @@ class BrowserCore:
                 **self._get_launch_options(self.browser_type),
             )
 
-            self.context = await self.browser.new_context(
-                viewport=self.config.get("viewport_size"),
-            )
+            # 构建 context 参数
+            context_options: dict[str, Any] = {
+                "viewport": self.config.get("viewport_size"),
+            }
+            
+            # 如果配置了代理，添加代理设置
+            proxy_config = self._get_proxy_config()
+            if proxy_config:
+                context_options["proxy"] = proxy_config
+
+            self.context = await self.browser.new_context(**context_options)
 
             raw_cookies = self.cookie.load_cookies()
             cookies = [
@@ -199,6 +207,36 @@ class BrowserCore:
     # ======================================================
     # 参数
     # ======================================================
+
+    def _get_proxy_config(self) -> dict[str, Any] | None:
+        """
+        获取代理配置
+        返回 Playwright 格式的代理配置字典，如果未启用代理则返回 None
+        """
+        proxy_cfg = self.config.get("proxy", {})
+        
+        # 如果代理未启用或服务器地址为空，返回 None
+        if not proxy_cfg.get("enabled", False) or not proxy_cfg.get("server", "").strip():
+            return None
+        
+        proxy_dict: dict[str, Any] = {
+            "server": proxy_cfg["server"].strip()
+        }
+        
+        # 添加用户名和密码（如果提供）
+        username = proxy_cfg.get("username", "").strip()
+        password = proxy_cfg.get("password", "").strip()
+        if username:
+            proxy_dict["username"] = username
+        if password:
+            proxy_dict["password"] = password
+        
+        # 添加绕过列表（如果提供）
+        bypass = proxy_cfg.get("bypass", "").strip()
+        if bypass:
+            proxy_dict["bypass"] = bypass
+        
+        return proxy_dict
 
     def _get_launch_options(self, engine: str) -> dict[str, Any]:
         args = [

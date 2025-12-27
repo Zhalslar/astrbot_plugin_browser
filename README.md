@@ -37,6 +37,18 @@ _✨ [astrbot](https://github.com/AstrBotDevs/AstrBot) 浏览器对接插件 ✨
 
   ![tmp692A](https://github.com/user-attachments/assets/d809f0f4-308f-4ad2-a555-e79ac72f3154)
 
+### 代理配置
+
+本插件支持使用代理服务器访问需要代理的网站（如YouTube等）。在插件配置面板的"代理配置"部分进行设置：
+
+- **启用代理**：是否启用代理服务器
+- **代理服务器地址**：格式为 `http://host:port`、`https://host:port` 或 `socks5://host:port`，例如：`http://127.0.0.1:7890`
+- **代理用户名**：如果代理服务器需要认证，请填写用户名，否则留空
+- **代理密码**：如果代理服务器需要认证，请填写密码，否则留空
+- **代理绕过列表**：不使用代理的域名列表，用逗号分隔，支持通配符，例如：`*.local,*.cn,localhost`
+
+配置完成后，重启浏览器（发送命令 `/关闭浏览器`）使配置生效。
+
 ## 🕹️ 使用说明
 
 ![tmp9666](https://github.com/user-attachments/assets/8d5f44de-1683-47b6-aa2b-4ea4665ed4d8)
@@ -49,6 +61,7 @@ _✨ [astrbot](https://github.com/AstrBotDevs/AstrBot) 浏览器对接插件 ✨
 - [x] 屏蔽违禁词
 - [x] 新增帮助文档：提供指令使用指南，支持 `/浏览器帮助` 查询
 - [x] 降低性能消耗：优化代码逻辑，减少资源占用
+- [x] 支持代理配置：允许配置HTTP/HTTPS/SOCKS5代理访问需要代理的网站
 
 
 ## 👥 贡献指南

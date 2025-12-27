@@ -224,11 +224,11 @@ class BrowserCore:
         }
         
         # 添加用户名和密码（如果提供）
+        # 注意：如果提供了用户名或密码，两者必须同时提供才能进行身份验证
         username = proxy_cfg.get("username", "").strip()
         password = proxy_cfg.get("password", "").strip()
-        if username:
+        if username and password:
             proxy_dict["username"] = username
-        if password:
             proxy_dict["password"] = password
         
         # 添加绕过列表（如果提供）

@@ -31,12 +31,12 @@ _✨ [astrbot](https://github.com/AstrBotDevs/AstrBot) 浏览器对接插件 ✨
 
 ### Docker环境依赖问题
 
-Docker因为自身缺陷会出现依赖问题，通过以下命令可正常使用：
-1、进入astrbot docker环境
+Docker因为自身缺陷会出现依赖问题，通过以下命令可正常使用： 
+**1、进入astrbot docker环境**
 docker exec -it 【container-id】 bash
-2、安装缺失的依赖
+**2、安装缺失的依赖**
 playwright install-deps
-3、重新发送"安装浏览器"命令，即可安装成功
+**3、重新发送"安装浏览器"命令，即可安装成功**
 
 ## 🤝 配置
 

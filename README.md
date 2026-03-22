@@ -89,7 +89,7 @@ playwright install-deps
 2. 输入文本并发送（优先点发送按钮，否则按回车）
 3. 返回当前页面截图
 
-相关配置项：
+相关配置项(无需关心)：
 
 - `chat_input_selector`：输入框 CSS 选择器（支持逗号分隔多个选择器）
 - `chat_send_selector`：发送按钮 CSS 选择器（留空则回车发送）

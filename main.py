@@ -45,6 +45,7 @@ class BrowserPlugin(Star):
     async def terminate(self):
         """插件卸载时触发，关闭浏览器及监控"""
         await self.operator.close_browser()
+        await self.supervisor.stop()
         self.overlay.clear_cache()
 
     # ================= 浏览器依赖 ===================
@@ -54,6 +55,17 @@ class BrowserPlugin(Star):
         self, event: AstrMessageEvent, browser_type: str | None = None
     ):
         """安装 Playwright 浏览器依赖"""
+        if self.config.get("browser_mode", "embedded") == "local_cdp":
+            yield event.plain_result("当前为 local_cdp 模式，正在检查 playwright 运行时...")
+            ok, msg = await self.downloader.ensure_playwright_runtime()
+            if ok:
+                yield event.plain_result(
+                    "playwright 运行时已就绪。请确保本地 Chromium 已开启 CDP 端口（默认 9222）。"
+                )
+            else:
+                yield event.plain_result(msg)
+            return
+
         browser_type = browser_type or self.config["browser_type"]
         yield event.plain_result(f"正在安装 {browser_type} 浏览器...")
         ok, msg = await self.downloader.download(browser_type)
@@ -146,6 +158,11 @@ class BrowserPlugin(Star):
     async def close_browser(self, event: AstrMessageEvent):
         """关闭浏览器"""
         await self.operator.close_browser(event)
+
+    @filter.command("对话", alias={"浏览器对话", "继续对话"})
+    async def chat(self, event: AstrMessageEvent, text: str | None = None):
+        """向当前网页输入并发送对话内容，如/对话 你好"""
+        await self.operator.chat(event, text)
 
     @filter.command("收藏夹", alias={"查看收藏夹"})
     async def favorite_list(self, event: AstrMessageEvent):

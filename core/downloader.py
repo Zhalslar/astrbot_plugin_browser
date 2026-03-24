@@ -44,6 +44,10 @@ class BrowserDownloader:
 
     # ================== public ==================
 
+    async def ensure_playwright_runtime(self) -> tuple[bool, str]:
+        """仅确保 playwright Python 包可用（不下载浏览器内核）"""
+        return await self._ensure_playwright()
+
     async def download(self, browser: str) -> tuple[bool, str]:
         """
         下载指定浏览器（幂等）

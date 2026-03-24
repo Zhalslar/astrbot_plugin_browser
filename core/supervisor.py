@@ -29,6 +29,7 @@ class BrowserSupervisor:
         self.idle_timeout: int = sup_cfg.get("idle_timeout", 300)
         self.monitor_interval: float = sup_cfg.get("monitor_interval", 10.0)
         self.browser_type = config.get("browser_type", "firefox")
+        self.browser_mode = config.get("browser_mode", "embedded")
         self.verify_browser = config.get("verify_browser", True)
 
         self.data_dir = data_dir
@@ -90,7 +91,7 @@ class BrowserSupervisor:
         async with self._browser_lock:
             # 检测浏览器安装
             if not self.browser:
-                if self.verify_browser:
+                if self.browser_mode != "local_cdp" and self.verify_browser:
                     from .downloader import BrowserDownloader
 
                     if not await BrowserDownloader.verify_browser(self.browser_type):

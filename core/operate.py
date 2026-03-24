@@ -237,3 +237,45 @@ class BrowserOperator:
             if event:
                 await event.send(event.plain_result(f"关闭浏览器时出错: {e}"))
 
+    async def chat(self, event: AstrMessageEvent, text: str | None = None):
+        if not text:
+            msg = event.message_str.strip()
+            for prefix in ("对话", "浏览器对话", "继续对话"):
+                if msg.startswith(prefix):
+                    msg = msg[len(prefix) :].strip()
+                    break
+            text = msg
+
+        if not text:
+            await event.send(event.plain_result("用法：/对话 你要发送的内容"))
+            return
+
+        if self._contains_banned(text):
+            await event.send(event.plain_result("对话内容包含禁词"))
+            return
+
+        input_selector = self.config.get(
+            "chat_input_selector",
+            "textarea, div[contenteditable='true'], input[type='text']",
+        )
+        send_selector = self.config.get("chat_send_selector", "")
+        try:
+            wait_ms = max(int(self.config.get("chat_wait_ms", 1500)), 0)
+        except (TypeError, ValueError):
+            wait_ms = 1500
+
+        try:
+            result = await self.supervisor.call(
+                "chat_send",
+                text=text,
+                input_selector=str(input_selector),
+                send_selector=str(send_selector),
+                wait_ms=wait_ms,
+            )
+        except Exception as e:
+            logger.exception(f"浏览器对话执行失败: {e}")
+            await event.send(event.plain_result(f"浏览器对话执行失败: {e}"))
+            return
+
+        await self.send_screenshot(event, result)
+

@@ -24,10 +24,38 @@ _✨ [astrbot](https://github.com/AstrBotDevs/AstrBot) 浏览器对接插件 ✨
 
 直接在astrbot的插件市场搜索astrbot_plugin_browser，点击安装，等待完成即可
 
-### 第二步，安装浏览器组件
+### 第二步，安装浏览器组件（embedded 模式）
 
 - 打开插件配置面板，选择你要使用的浏览器，默认是firefox
 - 在聊天中发送命令 `安装浏览器`，等待浏览器安装完成即可使用
+
+### 可选：接入本地浏览器（local_cdp 模式，请使用chromium内核）
+
+如果你希望插件直接操控本地浏览器窗口，请在配置中设置：
+
+- `browser_mode = local_cdp`
+- `cdp_url = http://127.0.0.1:9222`（默认值）
+- `browser_type = chromium`
+
+> `local_cdp` 只需要 `cdp_url`，**不需要在插件里配置浏览器可执行文件路径**。
+> 插件只负责连接你本机已开启的 CDP 端口；你用什么系统启动浏览器由你自己决定。
+
+`local_cdp` 模式下不需要下载内置浏览器内核；但首次使用前可执行一次 `安装浏览器`，用于安装/检查 playwright Python 运行时。
+
+#### Linux 启动示例(较新版本的Linux需要加上--no-sandbox)
+
+- Chrome
+
+```bash
+google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-cdp
+```
+
+- Edge
+
+```bash
+microsoft-edge --remote-debugging-port=9222 --user-data-dir=/tmp/edge-cdp
+```
+
 
 ### Docker环境依赖问题
 
@@ -50,6 +78,22 @@ playwright install-deps
 ## 🕹️ 使用说明
 
 ![tmp9666](https://github.com/user-attachments/assets/8d5f44de-1683-47b6-aa2b-4ea4665ed4d8)
+
+### 对话交互命令
+
+- `/对话 你好`
+- `/继续对话 请把上一条答案再简化`
+
+对话命令会：
+1. 在当前标签页定位输入框
+2. 输入文本并发送（优先点发送按钮，否则按回车）
+3. 返回当前页面截图
+
+相关配置项：
+
+- `chat_input_selector`：输入框 CSS 选择器（支持逗号分隔多个选择器）
+- `chat_send_selector`：发送按钮 CSS 选择器（留空则回车发送）
+- `chat_wait_ms`：发送后等待时间（毫秒）
 
 ## 🤝 TODO  
 

@@ -10,10 +10,26 @@
         ],
         "default": "firefox"
     },
+    "browser_mode": {
+        "description": "浏览器接入模式",
+        "type": "string",
+        "hint": "embedded：插件内置浏览器（默认）；local_cdp：接入本地已启动的 Chromium 浏览器调试端口",
+        "options": [
+            "embedded",
+            "local_cdp"
+        ],
+        "default": "embedded"
+    },
+    "cdp_url": {
+        "description": "本地浏览器 CDP 地址",
+        "type": "string",
+        "hint": "仅 browser_mode=local_cdp 时生效，例如：http://127.0.0.1:9222",
+        "default": "http://127.0.0.1:9222"
+    },
     "verify_browser": {
         "description": "验证浏览器",
         "type": "bool",
-        "hint": "启用后，每次启动浏览器时，会检查浏览器是否已安装并可用，建议在验证完可用性后关闭，关闭后可减少浏览器启动耗时",
+        "hint": "启用后，每次启动浏览器时，会检查浏览器是否已安装并可用；local_cdp 模式下会自动跳过",
         "default": true
     },
     "default_search_engine": {
@@ -139,6 +155,29 @@
             "step": 1
         },
         "default": 30
+    },
+    "chat_input_selector": {
+        "description": "对话输入框选择器",
+        "type": "string",
+        "hint": "用于 /对话 指令，支持 CSS 选择器，多个选择器可用逗号分隔",
+        "default": "textarea, div[contenteditable='true'], input[type='text']"
+    },
+    "chat_send_selector": {
+        "description": "对话发送按钮选择器",
+        "type": "string",
+        "hint": "用于 /对话 指令，留空则自动按 Enter 发送",
+        "default": ""
+    },
+    "chat_wait_ms": {
+        "description": "对话发送后等待毫秒",
+        "type": "int",
+        "hint": "发送消息后等待页面响应的时间，用于提高截图稳定性",
+        "slider": {
+            "min": 300,
+            "max": 10000,
+            "step": 100
+        },
+        "default": 1500
     },
     "supervisor": {
         "description": "监控器配置",
